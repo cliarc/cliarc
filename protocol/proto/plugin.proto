@@ -1,0 +1,89 @@
+syntax = "proto3";
+
+package cliarc.protocol;
+
+option go_package = "github.com/cliarc/cliarc/protocol/generated/go/cliarc/protocol";
+
+import "common.proto";
+
+// PluginService is the long-term contract between CLIARC Core and all plugins.
+// This protocol is language-independent. SDKs for other languages generate
+// client/server stubs from these same .proto files.
+service PluginService {
+  // Initialize is called once after the plugin process starts.
+  // The plugin returns its manifest and any initialization errors.
+  rpc Initialize(InitializeRequest) returns (InitializeResponse);
+
+  // Execute is called for every action the plugin supports.
+  // The action name and payload are provided in the request.
+  rpc Execute(ExecuteRequest) returns (ExecuteResponse);
+
+  // Health is polled by the Core to detect crashed or unresponsive plugins.
+  rpc Health(HealthRequest) returns (HealthResponse);
+
+  // Shutdown is called before the Core terminates the plugin process.
+  rpc Shutdown(ShutdownRequest) returns (ShutdownResponse);
+}
+
+// --- Initialize ---
+
+message InitializeRequest {
+  // Core passes its version so plugins can negotiate compatibility.
+  string core_version = 1;
+  // Working directory provided to the plugin.
+  string work_dir = 2;
+  // Plugin-specific configuration (from cliarc config).
+  bytes config = 3;
+}
+
+message InitializeResponse {
+  Status status = 1;
+  PluginManifest manifest = 2;
+  ErrorInfo error = 3;
+}
+
+// --- Execute ---
+
+message ExecuteRequest {
+  // Unique execution ID for tracing.
+  string execution_id = 1;
+  // Action name, e.g. "connection.test", "server.check".
+  string action = 2;
+  // JSON-encoded payload specific to the action.
+  bytes payload = 3;
+  // Server context, if applicable.
+  Server server = 4;
+}
+
+message ExecuteResponse {
+  Status status = 1;
+  // JSON-encoded result.
+  bytes result = 2;
+  ErrorInfo error = 3;
+}
+
+// --- Health ---
+
+message HealthRequest {
+  // Core can include a nonce to verify the plugin is not returning stale data.
+  string nonce = 1;
+}
+
+message HealthResponse {
+  Status status = 1;
+  // Plugin-defined health details.
+  map<string, string> details = 2;
+}
+
+// --- Shutdown ---
+
+message ShutdownRequest {
+  // Reason for shutdown.
+  string reason = 1;
+  // If true, the plugin should persist any state before exiting.
+  bool graceful = 2;
+}
+
+message ShutdownResponse {
+  Status status = 1;
+}

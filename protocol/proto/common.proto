@@ -1,0 +1,54 @@
+syntax = "proto3";
+
+package cliarc.protocol;
+
+option go_package = "github.com/cliarc/cliarc/protocol/generated/go/cliarc/protocol";
+
+// Common status for responses
+enum Status {
+  STATUS_UNSPECIFIED = 0;
+  STATUS_OK = 1;
+  STATUS_ERROR = 2;
+  STATUS_WARNING = 3;
+}
+
+// Structured error information
+message ErrorInfo {
+  string code = 1;
+  string message = 2;
+  string category = 3;
+  float confidence = 4;  // 0.0 to 1.0 for diagnostic confidence
+  map<string, string> details = 5;
+}
+
+// Empty request/response placeholder
+message Empty {}
+
+// Plugin manifest metadata (sent during initialize)
+message PluginManifest {
+  string name = 1;
+  string version = 2;
+  string protocol_version = 3;
+  string description = 4;
+  string author = 5;
+  repeated string permissions = 6;
+  repeated string actions = 7;
+}
+
+// Secret reference (never contains raw secret value)
+message SecretRef {
+  string name = 1;
+  string provider = 2;  // e.g., "keychain", "env", "file"
+  map<string, string> metadata = 3;
+}
+
+// Server definition
+message Server {
+  string id = 1;
+  string name = 2;
+  string host = 3;
+  int32 port = 4;
+  string username = 5;
+  SecretRef ssh_key_ref = 6;
+  map<string, string> tags = 7;
+}
