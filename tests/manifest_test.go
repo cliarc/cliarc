@@ -88,7 +88,7 @@ actions:
 
 func TestCLIARCPluginYAMLLoad(t *testing.T) {
 	dir := t.TempDir()
-	path := filepath.Join(dir, "cliarc.plugin.yaml")
+	path := filepath.Join(dir, "plugin.yaml")
 	content := `
 name: custom-tool
 version: 0.2.0
@@ -118,3 +118,82 @@ commands:
 	assert.Contains(t, mf.Commands, "custom-tool.run")
 	assert.Contains(t, mf.Actions, "custom-tool.run")
 }
+
+func TestSchemaV1ManifestLoad(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "plugin.yaml")
+	content := `
+schemaVersion: 1
+
+plugin:
+  id: docker
+  name: Docker
+  version: 1.0.0
+  description: Docker management plugin for CLIARC
+  author:
+    name: Sorabh
+    homepage: https://cliarc.com
+  license: MIT
+  homepage: https://cliarc.com/plugins/docker
+  repository: https://github.com/cliarc/plugins
+
+runtime:
+  type: wasm
+  entry: plugin.wasm
+  wasi: true
+
+cli:
+  minVersion: 1.0.0
+
+commands:
+  ps:
+    description: List Docker containers
+    handler: docker.container.read
+    permissions:
+      - docker.container:read
+  create:
+    description: Create a Docker container
+    handler: docker.container.create
+    permissions:
+      - docker.container:create
+  start:
+    description: Start a Docker container
+    handler: docker.container.start
+    permissions:
+      - docker.container:start
+
+permissions:
+  - docker.container:read
+  - docker.container:create
+  - docker.container:start
+
+verification:
+  algorithm: Ed25519
+  keyId: publisher-key-001
+  sha256: ""
+  signature: ""
+
+package:
+  format: wasm
+  entry: plugin.wasm
+`
+	require.NoError(t, os.WriteFile(path, []byte(content), 0644))
+
+	mf, err := manifest.Load(dir)
+	require.NoError(t, err)
+	assert.Equal(t, 1, mf.SchemaVersion)
+	assert.Equal(t, "docker", mf.ID)
+	assert.Equal(t, "Docker", mf.Name)
+	assert.Equal(t, "1.0.0", mf.Version)
+	assert.Equal(t, "Sorabh", mf.Author)
+	assert.Equal(t, "MIT", mf.License)
+	assert.Equal(t, "wasm", mf.Runtime.Type)
+	assert.Equal(t, "plugin.wasm", mf.Runtime.Entry)
+	assert.Equal(t, "1.0.0", mf.MinCLIARCVersion)
+	assert.Len(t, mf.CommandTree, 3)
+	assert.Contains(t, mf.Commands, "docker.container.read")
+	assert.Contains(t, mf.Commands, "docker.container.create")
+	assert.Contains(t, mf.Commands, "docker.container.start")
+	assert.Contains(t, mf.Permissions, "docker.container:read")
+}
+

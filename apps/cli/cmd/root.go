@@ -32,14 +32,17 @@ func init() {
 	// 3. Plugin Development Layer
 	rootCmd.AddCommand(devCmd)
 
-	// 4. Register Dynamic Plugin Commands (docker, ssh, kubernetes, aws, etc.)
+	// 4. Register Dynamic Plugin Commands (docker, ssh, etc.)
 	RegisterDynamicPluginCommands(rootCmd)
 
-	// Custom Stylized Help Template
-	rootCmd.SetHelpTemplate(fmt.Sprintf(`%s
+	// Custom Root Help
+	defaultHelpFunc := rootCmd.HelpFunc()
+	rootCmd.SetHelpFunc(func(c *cobra.Command, args []string) {
+		if c == rootCmd {
+			fmt.Printf(`%s
 
 %s
-  {{.UseLine}}
+  cliarc [command] [flags]
 
 %s
   %s    CLIARC version and build info
@@ -72,39 +75,43 @@ func init() {
   %s    Clean build artifacts and temporary files
 
 %s
-  {{.Flags.FlagUsages | trimTrailingWhitespaces}}
+  -h, --help   help for cliarc
 
-Use "{{.CommandPath}} [command] --help" for more information about a command.
+Use "cliarc [command] --help" for more information about a command.
 `,
-		color.CyanString("CLIARC Developer Platform — One Core. Unlimited Possibilities."),
-		color.YellowString("USAGE:"),
-		color.GreenString("CORE COMMANDS:"),
-		color.CyanString("cliarc version"),
-		color.CyanString("cliarc doctor "),
-		color.CyanString("cliarc config "),
-		color.CyanString("cliarc update "),
-		color.CyanString("cliarc"),
-		color.CyanString("cliarc help   "),
-		color.GreenString("PLUGIN MANAGEMENT:"),
-		color.CyanString("cliarc plugin search   "),
-		color.CyanString("cliarc plugin install  "),
-		color.CyanString("cliarc plugin uninstall"),
-		color.CyanString("cliarc plugin update   "),
-		color.CyanString("cliarc plugin list     "),
-		color.CyanString("cliarc plugin info     "),
-		color.CyanString("cliarc plugin enable   "),
-		color.CyanString("cliarc plugin disable  "),
-		color.GreenString("PLUGIN DEVELOPMENT:"),
-		color.CyanString("cliarc dev init     "),
-		color.CyanString("cliarc dev run      "),
-		color.CyanString("cliarc dev test     "),
-		color.CyanString("cliarc dev build    "),
-		color.CyanString("cliarc dev package  "),
-		color.CyanString("cliarc dev publish  "),
-		color.CyanString("cliarc dev link     "),
-		color.CyanString("cliarc dev unlink   "),
-		color.CyanString("cliarc dev validate "),
-		color.CyanString("cliarc dev clean    "),
-		color.YellowString("FLAGS:"),
-	))
+				color.CyanString("CLIARC Developer Platform — One Core. Unlimited Possibilities."),
+				color.YellowString("USAGE:"),
+				color.GreenString("CORE COMMANDS:"),
+				color.CyanString("cliarc version"),
+				color.CyanString("cliarc doctor "),
+				color.CyanString("cliarc config "),
+				color.CyanString("cliarc update "),
+				color.CyanString("cliarc"),
+				color.CyanString("cliarc help   "),
+				color.GreenString("PLUGIN MANAGEMENT:"),
+				color.CyanString("cliarc plugin search   "),
+				color.CyanString("cliarc plugin install  "),
+				color.CyanString("cliarc plugin uninstall"),
+				color.CyanString("cliarc plugin update   "),
+				color.CyanString("cliarc plugin list     "),
+				color.CyanString("cliarc plugin info     "),
+				color.CyanString("cliarc plugin enable   "),
+				color.CyanString("cliarc plugin disable  "),
+				color.GreenString("PLUGIN DEVELOPMENT:"),
+				color.CyanString("cliarc dev init     "),
+				color.CyanString("cliarc dev run      "),
+				color.CyanString("cliarc dev test     "),
+				color.CyanString("cliarc dev build    "),
+				color.CyanString("cliarc dev package  "),
+				color.CyanString("cliarc dev publish  "),
+				color.CyanString("cliarc dev link     "),
+				color.CyanString("cliarc dev unlink   "),
+				color.CyanString("cliarc dev validate "),
+				color.CyanString("cliarc dev clean    "),
+				color.YellowString("FLAGS:"),
+			)
+		} else {
+			defaultHelpFunc(c, args)
+		}
+	})
 }

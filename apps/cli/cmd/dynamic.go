@@ -102,9 +102,23 @@ func RegisterDynamicPluginCommands(root *cobra.Command) {
 }
 
 func buildPluginCommandTree(mf *manifest.Manifest) *cobra.Command {
+	useName := strings.ToLower(mf.Name)
+	if mf.ID != "" {
+		useName = strings.ToLower(mf.ID)
+	}
+
+	var aliases []string
+	if strings.ToLower(mf.Name) != useName {
+		aliases = append(aliases, strings.ToLower(mf.Name))
+	}
+	if mf.Name != useName {
+		aliases = append(aliases, mf.Name)
+	}
+
 	cmd := &cobra.Command{
-		Use:   mf.Name,
-		Short: mf.Description,
+		Use:     useName,
+		Aliases: aliases,
+		Short:   mf.Description,
 		Long: fmt.Sprintf("%s\n\nPlugin: %s (v%s)\nAuthor: %s\nLicense: %s",
 			mf.Description, mf.Name, mf.Version, mf.Author, mf.License),
 		SilenceUsage: true,
@@ -149,7 +163,10 @@ func buildSubcommand(mf *manifest.Manifest, def manifest.CommandDefinition) *cob
 		Short:   def.Description,
 		Long:    def.Description,
 		RunE: func(c *cobra.Command, args []string) error {
-			action := def.Action
+			action := def.Handler
+			if action == "" {
+				action = def.Action
+			}
 			if action == "" {
 				action = mf.Name + "." + def.Name
 			}
